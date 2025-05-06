@@ -140,10 +140,10 @@ def get_menu_choice():
     """Get and validate menu choice"""
     while True:
         try:
-            choice = int(input("\nEnter your choice (1-5): "))
+            choice = int(input("\nEnter your choice (1-4): "))
             if 1 <= choice <= 5:
                 return choice
-            print("Please enter a number between 1 and 5!")
+            print("Please enter a number between 1 and 4!")
         except ValueError:
             print("Invalid input! Please enter a number.")
 
