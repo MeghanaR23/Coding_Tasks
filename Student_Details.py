@@ -2,6 +2,25 @@ import json
 import os
 
 DATA_FILE = "students_data.json"
+
+class Student:
+    def __init__(self, name, roll_number, marks):
+        self.name = name
+        self.roll_number = roll_number
+        self.marks = marks if marks is not None else {} 
+    
+    def average(self):
+        if not self.marks:
+            return 0
+        return sum(self.marks.values()) / len(self.marks)
+    
+    def to_dict(self):
+        return {
+            'Name': self.name,
+            'Roll_Number': self.roll_number,
+            'Marks': self.marks
+        }
+
 students = []
 
 def load_data():
@@ -9,7 +28,10 @@ def load_data():
     try:
         if os.path.exists(DATA_FILE):
             with open(DATA_FILE, 'r') as file:
-                students = json.load(file)
+                student_dicts = json.load(file)
+                students = []
+                for s in student_dicts:
+                    students.append(Student(s['Name'], s['Roll_Number'], s['Marks']))
             print("Previous student data loaded successfully.")
         else:
             print("No existing data file found. Starting with empty records.")
@@ -19,24 +41,27 @@ def load_data():
 
 def save_data():
     try:
+        student_dicts = []
+        for student in students:
+            student_dicts.append(student.to_dict())
+        
         with open(DATA_FILE, 'w') as file:
-            json.dump(students, file, indent=4)
+            json.dump(student_dicts, file, indent=4)
         print("Student data saved successfully.")
     except Exception as e:
         print(f"Error saving data: {e}")
 
 def display_student(student, index=None):
-    """Display a single student's details"""
     if index is not None:
         print(f"\nStudent #{index + 1}")
-    print(f"Name: {student['Name']}")
-    print(f"Roll Number: {student['Roll_Number']}")
+    print(f"Name: {student.name}")
+    print(f"Roll Number: {student.roll_number}")
     print("Marks:")
-    for subject, mark in student['Marks'].items():
+    for subject, mark in student.marks.items():
         print(f"  {subject}: {mark}")
+    print(f"Average Marks: {student.average():.2f}")
 
 def display_all_students_details():
-    """Display all students with index numbers"""
     print("\nAll Student Records")
     print("------------------")
     if not students:
@@ -75,72 +100,50 @@ def validate_input(prompt, input_type="text", existing_rolls=None, subject=None)
             print(f"Invalid input: {e}. Please try again.")
 
 def add_student():
-    existing_rolls = [s['Roll_Number'] for s in students]
+    existing_rolls = [s.roll_number for s in students]
     
     while True:
         print("\nAdd New Student")
-        student = {
-            'Name': validate_input("Enter Student Name: ", "text"),
-            'Roll_Number': validate_input("Enter Roll Number: ", "roll", existing_rolls),
-            'Marks': {
-                'Maths': validate_input("Enter Maths marks (0-100): ", "mark"),
-                'Physics': validate_input("Enter Physics marks (0-100): ", "mark"),
-                'Chemistry': validate_input("Enter Chemistry marks (0-100): ", "mark")
-            }
+        name = validate_input("Enter Student Name: ", "text")
+        roll_number = validate_input("Enter Roll Number: ", "roll", existing_rolls)
+        marks = {
+            'Maths': validate_input("Enter Maths marks (0-100): ", "mark"),
+            'Physics': validate_input("Enter Physics marks (0-100): ", "mark"),
+            'Chemistry': validate_input("Enter Chemistry marks (0-100): ", "mark")
         }
         
+        student = Student(name, roll_number, marks)
         students.append(student)
-        existing_rolls.append(student['Roll_Number'])
-        print(f"\nStudent {student['Name']} added successfully!")
+        existing_rolls.append(roll_number)
+        print(f"\nStudent {student.name} added successfully!")
         
         if input("\nAdd another student? (y/n): ").lower() != 'y':
             break
 
 def search_student():
-    roll_mapping = {student['Roll_Number']: idx for idx, student in enumerate(students)}
-    
     roll_no = validate_input("\nEnter Roll Number to search: ", "roll")
-    if roll_no in roll_mapping:
-        idx = roll_mapping[roll_no]
-        print("\nStudent Found:")
-        display_student(students[idx], idx)
-        return idx
-    else:
-        print(f"\nNo student found with Roll Number: {roll_no}")
-        return None
-
-def edit_student():
-    student_idx = search_student()
-    if student_idx is None:
-        return
-    
-    student = students[student_idx]
-    print("\nEdit Student Details")
-    
-    if input(f"Edit name (current: {student['Name']})? (y/n): ").lower() == 'y':
-        student['Name'] = validate_input("Enter new name: ", "text")
-    
-    for subject in student['Marks']:
-        if input(f"Edit {subject} marks (current: {student['Marks'][subject]})? (y/n): ").lower() == 'y':
-            student['Marks'][subject] = validate_input(f"Enter new {subject} marks (0-100): ", "mark")
-    
-    print("\nUpdated Student Details:")
-    display_student(student, student_idx)
+    for idx, student in enumerate(students):
+        if student.roll_number == roll_no:
+            print("\nStudent Found:")
+            display_student(student, idx)
+            return idx
+    print(f"\nNo student found with Roll Number: {roll_no}")
+    return None
 
 def main_menu():
     print("1. Add Student")
     print("2. View All Students")
-    print("3. Search/Edit Student")
+    print("3. Search Student")
     print("4. Save and Exit")
 
 def get_menu_choice():
     """Get and validate menu choice"""
     while True:
         try:
-            choice = int(input("\nEnter your choice (1-4): "))
-            if 1 <= choice <= 4:
+            choice = int(input("\nEnter your choice (1-5): "))
+            if 1 <= choice <= 5:
                 return choice
-            print("Please enter a number between 1 and 4!")
+            print("Please enter a number between 1 and 5!")
         except ValueError:
             print("Invalid input! Please enter a number.")
 
@@ -156,7 +159,7 @@ def main():
         elif choice == 2:
             display_all_students_details()
         elif choice == 3:
-            edit_student()
+            search_student()
         elif choice == 4:
             save_data()
             print("\nExiting the program...")
