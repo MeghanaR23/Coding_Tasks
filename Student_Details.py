@@ -99,6 +99,18 @@ def validate_input(prompt, input_type="text", existing_rolls=None, subject=None)
         except ValueError as e:
             print(f"Invalid input: {e}. Please try again.")
 
+def find_topper():
+    if not students:
+        print("No student record found")
+        return None
+    
+    topper = max(students,key=lambda student:student.average())
+    
+    if topper:
+        print("Topper of the class is")
+        display_student(topper)
+    
+
 def add_student():
     existing_rolls = [s.roll_number for s in students]
     
@@ -153,16 +165,17 @@ def main_menu():
     print("2. View All Students")
     print("3. Search Student")
     print("4. Edit Student")
-    print("5. Save and Exit")
+    print("5. Find Topper")
+    print("6. Save and Exit")
 
 def get_menu_choice():
     """Get and validate menu choice"""
     while True:
         try:
-            choice = int(input("\nEnter your choice (1-5): "))
-            if 1 <= choice <= 5:
+            choice = int(input("\nEnter your choice (1-6): "))
+            if 1 <= choice <= 6:
                 return choice
-            print("Please enter a number between 1 and 5!")
+            print("Please enter a number between 1 and 6!")
         except ValueError:
             print("Invalid input! Please enter a number.")
 
@@ -182,6 +195,8 @@ def main():
         elif choice == 4:
             edit_student()
         elif choice == 5:
+            find_topper()
+        elif choice == 6:
             save_data()
             print("\nExiting the program...")
             break
